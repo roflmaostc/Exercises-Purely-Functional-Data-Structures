@@ -37,21 +37,21 @@ module WeightBiasedLeftistHeap (E:Ordered) : Heap with type t = E.t = struct
     | _ -> false
 
   let rec merge t1 t2 = 
+    let aux a b i e t= 
+      let ra = rank a in
+      let rb = rank b in
+      if ra<=rb then T(i, e, a, merge b t)
+      else T(i, e, b, merge a t)
+    in
     match (t1,t2) with
     | (E, E) -> E
     | (E, _) -> t2
     | (_, E) -> t1
     | (T(i1, e1, l1, r1), T(i2, e2, l2, r2)) -> 
       if E.leq e1 e2 then 
-        let rl1 = rank l1 in
-        let rr1 = rank r1 in
-        if rl1<=rr1 then T(i1+i2, e1, l1, merge r1 t2 )
-        else T(i1+i2, e1, r1, merge l1 t2 ) 
+        aux l1 r1 (i1+i2) e1 t2
       else 
-        let rl2 = rank l2 in
-        let rr2 = rank r2 in
-        if rl2<=rr2 then T(i1+i2, e1, l2, merge r2 t1 )
-        else T(i1+i2, e1, r1, merge l2 t1 ) 
+        aux l2 r2 (i1+i2) e2 t1
 
   let insert x t = merge (T(1, x, E, E)) t
 
