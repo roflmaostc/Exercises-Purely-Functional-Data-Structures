@@ -19,62 +19,6 @@ module type Ordered = sig
   val leq: t -> t -> bool
 end
 
-module WeightBiasedLeftistHeap (E:Ordered) : Heap with type t = E.t = struct 
-  type t = E.t
-  type heap = E | T of int * t * heap * heap
-
-  
-  exception Empty
-
-  let rank x = match x with
-    | E -> 0
-    | T(w,_,_,_) -> w
-
-  let empty = E
-
-  let isEmpty x = match x with 
-    | E -> true
-    | _ -> false
-
-  let rec merge t1 t2 = 
-    let aux a b i e t= 
-      let ra = rank a in
-      let rb = rank b in
-      if ra<=rb then T(i, e, a, merge b t)
-      else T(i, e, b, merge a t)
-    in
-    match (t1,t2) with
-    | (E, E) -> E
-    | (E, _) -> t2
-    | (_, E) -> t1
-    | (T(i1, e1, l1, r1), T(i2, e2, l2, r2)) -> 
-      if E.leq e1 e2 then 
-        aux l1 r1 (i1+i2) e1 t2
-      else 
-        aux l2 r2 (i1+i2) e2 t1
-
-  let insert x t = merge (T(1, x, E, E)) t
-
-  let findMin t = match t with
-    | E -> None
-    | T(_, x, _, _) -> Some x
-
-  let deleteMin t = match t with
-    | E -> raise Empty
-    | T(i, x, l, r) -> merge l r
-
-  let from_list l = 
-    let rec aux l acc = match l with
-      | [] -> (match acc with
-        | [] -> failwith "List empty"
-        | [x] -> x
-        | _ -> aux acc []) 
-      | h::[] -> if acc = [] then h else aux (h::acc) []
-      | h1::h2::tl -> aux tl (merge h1 h2::acc) 
-    in
-    aux (List.rev_map (fun x -> T(1, x, E, E)) l) []
-end
-
 
 module LeftistHeap (E:Ordered) : Heap with type t = E.t = struct 
   type t = E.t
@@ -126,6 +70,66 @@ module LeftistHeap (E:Ordered) : Heap with type t = E.t = struct
     | E -> raise Empty
     | T(i, x, l, r) -> merge l r
 
+
+  let from_list l = 
+    let rec aux l acc = match l with
+      | [] -> (match acc with
+        | [] -> E 
+        | [x] -> x
+        | _ -> aux acc []) 
+      | h::[] -> if acc = [] then h else aux (h::acc) []
+      | h1::h2::tl -> aux tl (merge h1 h2::acc) 
+    in
+    aux (List.rev_map (fun x -> T(1, x, E, E)) l) []
+end
+
+
+
+
+
+module WeightBiasedLeftistHeap (E:Ordered) : Heap with type t = E.t = struct 
+  type t = E.t
+  type heap = E | T of int * t * heap * heap
+
+  
+  exception Empty
+
+  let rank x = match x with
+    | E -> 0
+    | T(w,_,_,_) -> w
+
+  let empty = E
+
+  let isEmpty x = match x with 
+    | E -> true
+    | _ -> false
+
+  let rec merge t1 t2 = 
+    let aux a b i e t= 
+      let ra = rank a in
+      let rb = rank b in
+      if ra<=rb then T(i, e, a, merge b t)
+      else T(i, e, b, merge a t)
+    in
+    match (t1,t2) with
+    | (E, E) -> E
+    | (E, _) -> t2
+    | (_, E) -> t1
+    | (T(i1, e1, l1, r1), T(i2, e2, l2, r2)) -> 
+      if E.leq e1 e2 then 
+        aux l1 r1 (i1+i2) e1 t2
+      else 
+        aux l2 r2 (i1+i2) e2 t1
+
+  let insert x t = merge (T(1, x, E, E)) t
+
+  let findMin t = match t with
+    | E -> None
+    | T(_, x, _, _) -> Some x
+
+  let deleteMin t = match t with
+    | E -> raise Empty
+    | T(i, x, l, r) -> merge l r
 
   let from_list l = 
     let rec aux l acc = match l with
